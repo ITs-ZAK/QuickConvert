@@ -127,6 +127,28 @@ tests.Run("dark Fluent theme exposes reusable controls with interaction states",
         TestSuite.Equal(true, xaml.Contains($"Property=\"{state}\"", StringComparison.Ordinal));
 });
 
+tests.Run("main window preserves commands inside the dark Fluent hierarchy", () =>
+{
+    var xaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Ui", "MainWindow.xaml"));
+    foreach (var binding in new[]
+    {
+        "SelectFilesCommand", "ConvertCommand", "CancelCommand", "OpenOutputCommand",
+        "RetryCommand", "OpenUpdateCommand", "OpenLogCommand", "ClearLocalDataCommand"
+    })
+        TestSuite.Equal(true, xaml.Contains(binding, StringComparison.Ordinal));
+
+    foreach (var marker in new[]
+    {
+        "Lokalnie • Bez chmury", "Wybierz format wyniku", "Kolejka zadań",
+        "Folder pobierania", "Prywatność", "Strefa niebezpieczna"
+    })
+        TestSuite.Equal(true, xaml.Contains(marker, StringComparison.Ordinal));
+
+    TestSuite.Equal(true, xaml.Contains("Background=\"{StaticResource WindowBrush}\"", StringComparison.Ordinal));
+    TestSuite.Equal(true, xaml.Contains("Style=\"{StaticResource CardStyle}\"", StringComparison.Ordinal));
+    TestSuite.Equal(true, xaml.Contains("Style=\"{StaticResource DangerButtonStyle}\"", StringComparison.Ordinal));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(
