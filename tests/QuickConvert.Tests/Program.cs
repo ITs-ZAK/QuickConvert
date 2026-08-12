@@ -214,6 +214,22 @@ tests.Run("application embeds branding and applies dark title bar after handle c
     TestSuite.Equal(true, codeBehind.Contains("DarkTitleBar.TryApply", StringComparison.Ordinal));
 });
 
+tests.Run("installer uses QuickConvert branding assets", () =>
+{
+    var root = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    var installer = File.ReadAllText(Path.Combine(root, "installer", "QuickConvert.iss"));
+    TestSuite.Equal(
+        true,
+        installer.Contains(@"SetupIconFile=..\assets\branding\quickconvert.ico"));
+    TestSuite.Equal(
+        true,
+        installer.Contains(@"WizardSmallImageFile=..\assets\branding\quickconvert-wizard-small.png"));
+    TestSuite.Equal(
+        true,
+        installer.Contains(@"UninstallDisplayIcon={app}\{#MyAppExeName}"));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(
