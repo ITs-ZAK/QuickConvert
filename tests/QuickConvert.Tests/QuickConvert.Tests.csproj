@@ -6,6 +6,10 @@
     <ProjectReference Include="../../src/QuickConvert.Core/QuickConvert.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../../src/QuickConvert.App/DarkTitleBar.cs"
+             Link="Ui/DarkTitleBar.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="../../src/QuickConvert.App/App.xaml"
           Link="Ui/App.xaml"
           CopyToOutputDirectory="PreserveNewest" />

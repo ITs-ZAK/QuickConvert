@@ -2,6 +2,7 @@ using QuickConvert.Core.Conversion;
 using QuickConvert.Core.Jobs;
 using QuickConvert.Core.Messaging;
 using QuickConvert.Core.Updates;
+using QuickConvert.App;
 using System.Text;
 
 var tests = new TestSuite();
@@ -169,6 +170,27 @@ tests.Run("branding assets contain the selected Q mark and required icon sizes",
     TestSuite.Equal(
         (64, 64),
         ReadPngSize(Path.Combine(branding, "quickconvert-wizard-small.png")));
+});
+
+tests.Run("dark title bar falls back from DWM attribute 20 to 19", () =>
+{
+    var attributes = new List<int>();
+    int Setter(nint handle, int attribute, ref int value, int size)
+    {
+        attributes.Add(attribute);
+        return attribute == 19 ? 0 : -1;
+    }
+
+    TestSuite.Equal(true, DarkTitleBar.TryApply((nint)123, Setter));
+    TestSuite.SequenceEqual(new[] { 20, 19 }, attributes);
+});
+
+tests.Run("dark title bar ignores unavailable DWM without blocking startup", () =>
+{
+    int MissingDwm(nint handle, int attribute, ref int value, int size) =>
+        throw new DllNotFoundException("dwmapi.dll");
+    TestSuite.Equal(false, DarkTitleBar.TryApply((nint)123, MissingDwm));
+    TestSuite.Equal(false, DarkTitleBar.TryApply(nint.Zero, MissingDwm));
 });
 
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
