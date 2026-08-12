@@ -37,6 +37,8 @@ jobs:
         run: ./tools/build-release.ps1 -SkipExtensions
       - uses: softprops/action-gh-release@v2
         with:
+          name: QuickConvert ${{ github.ref_name }}
+          generate_release_notes: true
           files: |
             artifacts/installer/*.exe
             artifacts/SHA256SUMS.txt

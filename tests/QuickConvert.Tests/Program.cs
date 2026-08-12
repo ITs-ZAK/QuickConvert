@@ -367,6 +367,26 @@ tests.Run("v0.2.0 release version and installer branding stay aligned", () =>
         StringComparison.Ordinal));
 });
 
+tests.Run("release workflow names releases and generates notes", () =>
+{
+    var root = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    var workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "release.yml"));
+
+    TestSuite.Equal(true, workflow.Contains(
+        "name: QuickConvert ${{ github.ref_name }}",
+        StringComparison.Ordinal));
+    TestSuite.Equal(true, workflow.Contains(
+        "generate_release_notes: true",
+        StringComparison.Ordinal));
+    TestSuite.Equal(true, workflow.Contains(
+        "artifacts/installer/*.exe",
+        StringComparison.Ordinal));
+    TestSuite.Equal(true, workflow.Contains(
+        "artifacts/SHA256SUMS.txt",
+        StringComparison.Ordinal));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(
