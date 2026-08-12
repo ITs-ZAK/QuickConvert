@@ -9,7 +9,8 @@ public enum ConversionPreset
 
 public enum OutputDirectoryMode
 {
-    Adjacent
+    Adjacent,
+    DownloadsQuickConvert
 }
 
 public sealed record ConvertFilesRequest(

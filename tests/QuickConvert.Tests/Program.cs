@@ -46,6 +46,23 @@ tests.Run("output path never overwrites an existing file", () =>
     TestSuite.Equal(@"C:\Media\clip (2).mp3", result);
 });
 
+tests.Run("output path supports a separate destination and collision suffixes", () =>
+{
+    var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        @"D:\Downloads\QuickConvert\clip.mp3",
+        @"D:\Downloads\QuickConvert\clip (1).mp3"
+    };
+
+    var result = OutputPathResolver.GetAvailablePath(
+        @"C:\Media\clip.mkv",
+        "mp3",
+        @"D:\Downloads\QuickConvert",
+        existing.Contains);
+
+    TestSuite.Equal(@"D:\Downloads\QuickConvert\clip (2).mp3", result);
+});
+
 tests.Run("temporary path keeps target extension for FFmpeg format detection", () =>
 {
     TestSuite.Equal(
@@ -404,6 +421,73 @@ await tests.RunAsync("conversion engine publishes output only after successful t
     finally
     {
         Directory.Delete(directory, true);
+    }
+});
+
+await tests.RunAsync("downloads output mode creates its directory and preserves the source", async () =>
+{
+    var root = Path.Combine(Path.GetTempPath(), $"QuickConvertDownloads-{Guid.NewGuid():N}");
+    var sourceDirectory = Path.Combine(root, "source");
+    var downloadsDirectory = Path.Combine(root, "downloads", "QuickConvert");
+    Directory.CreateDirectory(sourceDirectory);
+    var source = Path.Combine(sourceDirectory, "sample.wav");
+    await File.WriteAllTextAsync(source, "source remains untouched");
+    try
+    {
+        var engine = new ConversionEngine(
+            @"C:\Tools\ffmpeg.exe",
+            new OutputCreatingProcessRunner(exitCode: 0),
+            downloadsDirectory);
+        var result = await engine.ConvertAsync(
+            new ConvertFilesRequest(
+                [source],
+                "mp3",
+                ConversionPreset.Balanced,
+                OutputDirectoryMode.DownloadsQuickConvert),
+            null,
+            CancellationToken.None);
+
+        TestSuite.Equal(true, result.Success);
+        TestSuite.Equal(Path.Combine(downloadsDirectory, "sample.mp3"), result.OutputPaths.Single());
+        TestSuite.Equal(true, Directory.Exists(downloadsDirectory));
+        TestSuite.Equal("source remains untouched", await File.ReadAllTextAsync(source));
+    }
+    finally
+    {
+        Directory.Delete(root, true);
+    }
+});
+
+await tests.RunAsync("unavailable output directory returns a categorized failure", async () =>
+{
+    var root = Path.Combine(Path.GetTempPath(), $"QuickConvertUnavailable-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(root);
+    var source = Path.Combine(root, "sample.wav");
+    var blockedDestination = Path.Combine(root, "not-a-directory");
+    await File.WriteAllTextAsync(source, "source");
+    await File.WriteAllTextAsync(blockedDestination, "file blocks directory creation");
+    try
+    {
+        var engine = new ConversionEngine(
+            @"C:\Tools\ffmpeg.exe",
+            new OutputCreatingProcessRunner(exitCode: 0),
+            blockedDestination);
+        var result = await engine.ConvertAsync(
+            new ConvertFilesRequest(
+                [source],
+                "mp3",
+                ConversionPreset.Balanced,
+                OutputDirectoryMode.DownloadsQuickConvert),
+            null,
+            CancellationToken.None);
+
+        TestSuite.Equal(false, result.Success);
+        TestSuite.Equal("output_unavailable", result.ErrorCode);
+        TestSuite.Equal(true, File.Exists(source));
+    }
+    finally
+    {
+        Directory.Delete(root, true);
     }
 });
 

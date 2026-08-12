@@ -147,6 +147,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         "network_error" => "Sprawdź połączenie z internetem.",
         "media_unavailable" => "Materiał jest niedostępny lub prywatny.",
         "disk_full" => "Brak wolnego miejsca na dysku.",
+        "output_unavailable" => "Nie można zapisać w wybranym folderze.",
         "canceled" => "Zadanie anulowano.",
         "tool_failed" => "Narzędzie nie mogło przetworzyć materiału.",
         null => string.Empty,
