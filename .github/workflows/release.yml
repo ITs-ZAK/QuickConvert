@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+      WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: choco install ffmpeg-full innosetup -y
+      - run: dotnet restore QuickConvert.slnx
+      - run: dotnet run --project tests/QuickConvert.Tests/QuickConvert.Tests.csproj -- --integration
+      - run: npm run test:extensions
+      - run: npm run check:extensions
+      - shell: pwsh
+        run: ./tools/build-extensions.ps1
+      - shell: pwsh
+        if: ${{ env.WEB_EXT_API_KEY != '' }}
+        env:
+          WEB_EXT_API_KEY: ${{ env.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ env.WEB_EXT_API_SECRET }}
+        run: ./tools/sign-firefox.ps1
+      - shell: pwsh
+        run: ./tools/build-release.ps1 -SkipExtensions
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/installer/*.exe
+            artifacts/SHA256SUMS.txt
+            dist/extensions/quickconvert-firefox*.xpi

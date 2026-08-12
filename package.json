@@ -1,0 +1,8 @@
+{
+  "name": "quickconvert-extension-tools",
+  "private": true,
+  "scripts": {
+    "test:extensions": "node extensions/tests/common.test.js",
+    "check:extensions": "node --check extensions/shared/common.js && node --check extensions/shared/background.js && node --check extensions/shared/popup.js"
+  }
+}

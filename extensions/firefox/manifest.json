@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "QuickConvert",
+  "version": "0.1.0",
+  "description": "Przekazuje do lokalnej aplikacji materiały, które możesz legalnie pobrać.",
+  "permissions": ["activeTab", "storage", "nativeMessaging"],
+  "action": {
+    "default_title": "QuickConvert",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "quickconvert@local",
+      "strict_min_version": "121.0"
+    }
+  }
+}

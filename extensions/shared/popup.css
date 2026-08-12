@@ -1,0 +1,92 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #181a22;
+  color: #f5f7ff;
+}
+
+body {
+  margin: 0;
+  width: 330px;
+}
+
+main {
+  padding: 18px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c9c5ff;
+}
+
+.mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: #6558f5;
+  color: white;
+}
+
+h1 {
+  min-height: 42px;
+  margin: 15px 0;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+  color: #a9afc3;
+  font-size: 12px;
+}
+
+select,
+button {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid #3a3e4c;
+  border-radius: 8px;
+  padding: 10px;
+  background: #232631;
+  color: #f5f7ff;
+}
+
+button {
+  margin-top: 16px;
+  border: 0;
+  background: #6558f5;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+#status {
+  min-height: 18px;
+  margin: 12px 0 0;
+  color: #75dfaa;
+  font-size: 12px;
+}
+
+#status.error {
+  color: #ff8c9a;
+}
+
+.legal {
+  margin: 10px 0 0;
+  color: #777e91;
+  font-size: 10px;
+}

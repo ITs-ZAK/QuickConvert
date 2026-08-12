@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "QuickConvert",
+  "version": "0.1.0",
+  "description": "Przekazuje do lokalnej aplikacji materiały, które możesz legalnie pobrać.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoqZ6Az+5zZToxHZRpqtZh0LsGm+y5Z4v+CQMBwlPaA9ujmw1rslH9SK3qzs/IKbvVxr+dL9+ww87mkR/DLx05ytZVNxg8H4SQf93syamJkoy/ApTg6lEsniRx+h1FNKdr/KNRu1Kh5OWl6ViHEZwqBo2UpSFs2VuosbYv+KP49Huzqw+FH7Php/qxLOls366p166q66gHGb5yoWcTfIICw0kW/c83AdL1sY/WgmC8QQ6uurH0zyfsRD73swFZVgf8HXgPD5g7XOzOS/Mu+ixv0aGPS5uA/m+p+HoPZQ6183ZVqKBIbdaH7OEWP+NaHZ44/Ni9sQfjkskGDtDzzlenQIDAQAB",
+  "permissions": ["activeTab", "storage", "nativeMessaging"],
+  "action": {
+    "default_title": "QuickConvert",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

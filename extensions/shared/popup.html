@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QuickConvert</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <div class="brand"><span class="mark">Q</span><strong>QuickConvert</strong></div>
+    <h1 id="title">Bieżący film</h1>
+    <label>
+      Format
+      <select id="mediaType">
+        <option value="mp3">MP3 — dźwięk</option>
+        <option value="mp4">MP4 — wideo</option>
+      </select>
+    </label>
+    <label>
+      Jakość
+      <select id="quality">
+        <option value="best">Najlepsza</option>
+        <option value="1080p">1080p</option>
+        <option value="720p">720p</option>
+        <option value="480p">480p</option>
+      </select>
+    </label>
+    <button id="download" type="button">Pobierz</button>
+    <p id="status" role="status"></p>
+    <p class="legal">Pobieraj wyłącznie materiały, do których masz prawa.</p>
+  </main>
+  <script src="common.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

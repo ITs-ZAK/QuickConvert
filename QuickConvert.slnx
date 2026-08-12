@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/QuickConvert.Core/QuickConvert.Core.csproj" />
+  <Project Path="src/QuickConvert.App/QuickConvert.App.csproj" />
+  <Project Path="src/QuickConvert.NativeHost/QuickConvert.NativeHost.csproj" />
+  <Project Path="tests/QuickConvert.Tests/QuickConvert.Tests.csproj" />
+  <Project Path="tools/QuickConvert.KeyGenerator/QuickConvert.KeyGenerator.csproj" />
+</Solution>
