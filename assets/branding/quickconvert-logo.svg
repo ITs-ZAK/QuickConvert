@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"
+     role="img" aria-label="QuickConvert Q in motion">
+  <defs>
+    <linearGradient id="quickconvert-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9B8CFF"/>
+      <stop offset="1" stop-color="#5145D6"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="16" fill="url(#quickconvert-gradient)"/>
+  <path d="M42.5 39.5A14 14 0 1 1 46 25l-5.4.2 8-10.2 8.8 9.6-5.3.2A20 20 0 1 0 47 45Z"
+        fill="#fff"/>
+  <path d="M34 35 48 49" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+</svg>
+

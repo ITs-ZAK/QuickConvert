@@ -149,6 +149,28 @@ tests.Run("main window preserves commands inside the dark Fluent hierarchy", () 
     TestSuite.Equal(true, xaml.Contains("Style=\"{StaticResource DangerButtonStyle}\"", StringComparison.Ordinal));
 });
 
+tests.Run("branding assets contain the selected Q mark and required icon sizes", () =>
+{
+    var root = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    var branding = Path.Combine(root, "assets", "branding");
+    var svg = File.ReadAllText(Path.Combine(branding, "quickconvert-logo.svg"));
+    TestSuite.Equal(true, svg.Contains("#9B8CFF", StringComparison.OrdinalIgnoreCase));
+    TestSuite.Equal(true, svg.Contains("#5145D6", StringComparison.OrdinalIgnoreCase));
+    TestSuite.Equal(
+        true,
+        svg.Contains("aria-label=\"QuickConvert Q in motion\"", StringComparison.Ordinal));
+
+    var sizes = ReadIcoSizes(Path.Combine(branding, "quickconvert.ico"));
+    TestSuite.SequenceEqual(new[] { 16, 20, 24, 32, 40, 48, 64, 128, 256 }, sizes);
+    TestSuite.Equal(
+        (256, 256),
+        ReadPngSize(Path.Combine(branding, "quickconvert-256.png")));
+    TestSuite.Equal(
+        (64, 64),
+        ReadPngSize(Path.Combine(branding, "quickconvert-wizard-small.png")));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(
@@ -478,6 +500,44 @@ if (args.Contains("--integration", StringComparer.OrdinalIgnoreCase))
 }
 
 return tests.Complete();
+
+static int[] ReadIcoSizes(string path)
+{
+    using var stream = File.OpenRead(path);
+    using var reader = new BinaryReader(stream);
+    TestSuite.Equal((ushort)0, reader.ReadUInt16());
+    TestSuite.Equal((ushort)1, reader.ReadUInt16());
+    var count = reader.ReadUInt16();
+    var sizes = new int[count];
+    for (var index = 0; index < count; index++)
+    {
+        var width = reader.ReadByte();
+        var height = reader.ReadByte();
+        sizes[index] = width == 0 ? 256 : width;
+        TestSuite.Equal(sizes[index], height == 0 ? 256 : height);
+        reader.ReadBytes(14);
+    }
+    return sizes;
+}
+
+static (int Width, int Height) ReadPngSize(string path)
+{
+    using var stream = File.OpenRead(path);
+    using var reader = new BinaryReader(stream);
+    TestSuite.SequenceEqual(
+        new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 },
+        reader.ReadBytes(8));
+    reader.ReadUInt32();
+    TestSuite.SequenceEqual(new byte[] { 73, 72, 68, 82 }, reader.ReadBytes(4));
+    var widthBytes = reader.ReadBytes(4);
+    var heightBytes = reader.ReadBytes(4);
+    if (BitConverter.IsLittleEndian)
+    {
+        Array.Reverse(widthBytes);
+        Array.Reverse(heightBytes);
+    }
+    return (BitConverter.ToInt32(widthBytes), BitConverter.ToInt32(heightBytes));
+}
 
 static async Task GenerateFixtureAsync(SystemProcessRunner runner, IReadOnlyList<string> arguments)
 {
