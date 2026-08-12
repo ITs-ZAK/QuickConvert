@@ -5,4 +5,12 @@
   <ItemGroup>
     <ProjectReference Include="../../src/QuickConvert.Core/QuickConvert.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../src/QuickConvert.App/App.xaml"
+          Link="Ui/App.xaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../src/QuickConvert.App/MainWindow.xaml"
+          Link="Ui/MainWindow.xaml"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

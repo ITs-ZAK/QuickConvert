@@ -111,6 +111,22 @@ tests.Run("update schedule enforces its complete interval", () =>
     TestSuite.Equal(true, UpdateSchedule.ShouldCheck(now.AddDays(-1), now, TimeSpan.FromDays(1)));
 });
 
+tests.Run("dark Fluent theme exposes reusable controls with interaction states", () =>
+{
+    var xaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Ui", "App.xaml"));
+    foreach (var key in new[]
+    {
+        "WindowBrush", "SurfaceBrush", "SurfaceHoverBrush", "BorderBrush",
+        "AccentBrush", "AccentHoverBrush", "TextBrush", "MutedBrush",
+        "DangerBrush", "WarningBrush", "CardStyle", "PrimaryButtonStyle",
+        "SecondaryButtonStyle", "DangerButtonStyle", "FormatButtonStyle"
+    })
+        TestSuite.Equal(true, xaml.Contains($"x:Key=\"{key}\"", StringComparison.Ordinal));
+
+    foreach (var state in new[] { "IsMouseOver", "IsPressed", "IsEnabled", "IsKeyboardFocused" })
+        TestSuite.Equal(true, xaml.Contains($"Property=\"{state}\"", StringComparison.Ordinal));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(
