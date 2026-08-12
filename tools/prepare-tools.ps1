@@ -1,6 +1,8 @@
 param([Parameter(Mandatory = $true)][string]$OutputDirectory)
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "ffmpeg-tools.ps1")
+
 $target = [System.IO.Path]::GetFullPath($OutputDirectory)
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 if (-not $target.StartsWith($repositoryRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -8,10 +10,7 @@ if (-not $target.StartsWith($repositoryRoot, [System.StringComparison]::OrdinalI
 }
 
 New-Item -ItemType Directory -Force -Path $target | Out-Null
-foreach ($name in @("ffmpeg.exe", "ffprobe.exe")) {
-    $command = Get-Command $name -ErrorAction Stop
-    Copy-Item -LiteralPath $command.Source -Destination (Join-Path $target $name) -Force
-}
+Copy-QuickConvertFfmpegTools -OutputDirectory $target
 
 $ytDlpPath = Join-Path $target "yt-dlp.exe"
 $checksumsPath = Join-Path $target "SHA2-256SUMS"

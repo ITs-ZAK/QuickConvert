@@ -21,6 +21,8 @@ jobs:
         with:
           node-version: 22
       - run: choco install ffmpeg-full innosetup -y
+      - shell: pwsh
+        run: ./tools/tests/ffmpeg-tools.tests.ps1
       - run: dotnet restore QuickConvert.slnx
       - run: dotnet run --project tests/QuickConvert.Tests/QuickConvert.Tests.csproj -- --integration
       - run: npm run test:extensions

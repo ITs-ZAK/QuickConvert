@@ -387,6 +387,25 @@ tests.Run("release workflow names releases and generates notes", () =>
         StringComparison.Ordinal));
 });
 
+tests.Run("release builds validate standalone FFmpeg tools", () =>
+{
+    var root = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    var prepare = File.ReadAllText(Path.Combine(root, "tools", "prepare-tools.ps1"));
+    var ci = File.ReadAllText(Path.Combine(root, ".github", "workflows", "ci.yml"));
+    var release = File.ReadAllText(Path.Combine(root, ".github", "workflows", "release.yml"));
+
+    TestSuite.Equal(true, prepare.Contains("ffmpeg-tools.ps1", StringComparison.Ordinal));
+    TestSuite.Equal(true, prepare.Contains("Copy-QuickConvertFfmpegTools", StringComparison.Ordinal));
+    TestSuite.Equal(false, prepare.Contains("Get-Command $name", StringComparison.Ordinal));
+    TestSuite.Equal(true, ci.Contains(
+        "./tools/tests/ffmpeg-tools.tests.ps1",
+        StringComparison.Ordinal));
+    TestSuite.Equal(true, release.Contains(
+        "./tools/tests/ffmpeg-tools.tests.ps1",
+        StringComparison.Ordinal));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(

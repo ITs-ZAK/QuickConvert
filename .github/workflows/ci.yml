@@ -15,6 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - shell: pwsh
+        run: ./tools/tests/ffmpeg-tools.tests.ps1
       - run: dotnet restore QuickConvert.slnx
       - run: dotnet build QuickConvert.slnx --no-restore --configuration Release
       - run: dotnet run --no-build --configuration Release --project tests/QuickConvert.Tests/QuickConvert.Tests.csproj
