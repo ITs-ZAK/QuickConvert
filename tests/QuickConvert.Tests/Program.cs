@@ -216,6 +216,31 @@ tests.Run("main window preserves commands inside the dark Fluent hierarchy", () 
     TestSuite.Equal(true, xaml.Contains("Style=\"{StaticResource DangerButtonStyle}\"", StringComparison.Ordinal));
 });
 
+tests.Run("conversion settings XAML exposes dark controls and functional bindings", () =>
+{
+    var appXaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Ui", "App.xaml"));
+    foreach (var style in new[] { "DarkComboBoxStyle", "DarkCheckBoxStyle", "DarkExpanderStyle" })
+        TestSuite.Equal(true, appXaml.Contains($"x:Key=\"{style}\"", StringComparison.Ordinal));
+
+    var windowXaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Ui", "MainWindow.xaml"));
+    foreach (var binding in new[]
+    {
+        "ItemsSource=\"{Binding QualityChoices}\"",
+        "SelectedItem=\"{Binding SelectedQuality}\"",
+        "ItemsSource=\"{Binding OutputDirectoryChoices}\"",
+        "SelectedItem=\"{Binding SelectedOutputDirectory}\"",
+        "IsChecked=\"{Binding OpenFolderOnCompletion}\"",
+        "Text=\"{Binding FormatEmptyMessage}\"",
+        "Binding=\"{Binding HasCompatibleFormats}\" Value=\"False\"",
+        "Style=\"{StaticResource DarkExpanderStyle}\""
+    })
+        TestSuite.Equal(true, windowXaml.Contains(binding, StringComparison.Ordinal));
+
+    TestSuite.Equal(
+        true,
+        windowXaml.Contains("FLAC, WAV, PNG i GIF nie zmieniają jakości", StringComparison.Ordinal));
+});
+
 tests.Run("branding assets contain the selected Q mark and required icon sizes", () =>
 {
     var root = Path.GetFullPath(Path.Combine(

@@ -150,6 +150,19 @@
 
                                 <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,12,0,16" />
                                 <TextBlock Text="Wybierz format wyniku" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding FormatEmptyMessage}"
+                                           Margin="0,10,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource MutedTextStyle}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasCompatibleFormats}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 <ItemsControl ItemsSource="{Binding CompatibleFormats}" Margin="0,11,0,0">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -168,15 +181,43 @@
                                 <TextBlock Text="{Binding AnimationWarning}"
                                            Foreground="{StaticResource WarningBrush}"
                                            TextWrapping="Wrap" Margin="0,2,0,0" />
-                                <Expander Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}">
+                                <Expander Margin="0,8,0,0"
+                                          Foreground="{StaticResource MutedBrush}"
+                                          Style="{StaticResource DarkExpanderStyle}">
                                     <Expander.Header>
                                         <TextBlock Text="Więcej ustawień" Foreground="{StaticResource MutedBrush}" FontWeight="SemiBold" />
                                     </Expander.Header>
-                                    <StackPanel Margin="0,10,0,2">
-                                        <TextBlock Text="Preset: wysoka jakość — MP3 192 kb/s, H.264 CRF 20, obrazy 90." TextWrapping="Wrap" />
-                                        <TextBlock Text="Wynik: obok pliku źródłowego. Oryginał zawsze pozostaje bez zmian."
-                                                   Style="{StaticResource MutedTextStyle}" Margin="0,5,0,0" />
-                                    </StackPanel>
+                                    <Grid Margin="0,6,0,2" MaxWidth="520" HorizontalAlignment="Left">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140" />
+                                            <ColumnDefinition Width="260" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Jakość" VerticalAlignment="Center" Margin="0,0,12,10" />
+                                        <ComboBox Grid.Column="1" Margin="0,0,0,10"
+                                                  ItemsSource="{Binding QualityChoices}"
+                                                  SelectedItem="{Binding SelectedQuality}"
+                                                  DisplayMemberPath="Label"
+                                                  Style="{StaticResource DarkComboBoxStyle}" />
+                                        <TextBlock Grid.Row="1" Text="Folder wyniku" VerticalAlignment="Center" Margin="0,0,12,10" />
+                                        <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,10"
+                                                  ItemsSource="{Binding OutputDirectoryChoices}"
+                                                  SelectedItem="{Binding SelectedOutputDirectory}"
+                                                  DisplayMemberPath="Label"
+                                                  Style="{StaticResource DarkComboBoxStyle}" />
+                                        <CheckBox Grid.Row="2" Grid.ColumnSpan="2" Margin="0,3,0,9"
+                                                  Content="Otwórz folder po zakończeniu"
+                                                  IsChecked="{Binding OpenFolderOnCompletion}"
+                                                  Style="{StaticResource DarkCheckBoxStyle}" />
+                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="2"
+                                                   Text="FLAC, WAV, PNG i GIF nie zmieniają jakości. Oryginał zawsze pozostaje bez zmian."
+                                                   Style="{StaticResource MutedTextStyle}" />
+                                    </Grid>
                                 </Expander>
                             </StackPanel>
                         </Border>
