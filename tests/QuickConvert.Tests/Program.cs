@@ -1,6 +1,7 @@
 using QuickConvert.Core.Conversion;
 using QuickConvert.Core.Jobs;
 using QuickConvert.Core.Messaging;
+using QuickConvert.Core.Settings;
 using QuickConvert.Core.Updates;
 using QuickConvert.App;
 using System.Text;
@@ -388,6 +389,93 @@ await tests.RunAsync("history can be cleared without leaving stale entries", asy
             "job", "convert", "file", JobStatus.Completed, DateTimeOffset.UtcNow));
         await store.ClearAsync();
         TestSuite.Equal(0, (await store.LoadAsync()).Count);
+    }
+    finally
+    {
+        if (Directory.Exists(directory))
+            Directory.Delete(directory, true);
+    }
+});
+
+await tests.RunAsync("missing settings file returns balanced adjacent defaults", async () =>
+{
+    var path = Path.Combine(Path.GetTempPath(), $"QuickConvertSettings-{Guid.NewGuid():N}", "settings.json");
+    var settings = await new JsonSettingsStore(path).LoadAsync();
+
+    TestSuite.Equal(ConversionPreset.Balanced, settings.QualityPreset);
+    TestSuite.Equal(OutputDirectoryMode.Adjacent, settings.OutputDirectoryMode);
+    TestSuite.Equal(false, settings.OpenFolderOnCompletion);
+});
+
+await tests.RunAsync("settings save round-trips and leaves no partial file", async () =>
+{
+    var directory = Path.Combine(Path.GetTempPath(), $"QuickConvertSettings-{Guid.NewGuid():N}");
+    var path = Path.Combine(directory, "settings.json");
+    try
+    {
+        var store = new JsonSettingsStore(path);
+        var expected = new QuickConvertSettings(
+            ConversionPreset.Highest,
+            OutputDirectoryMode.DownloadsQuickConvert,
+            true);
+
+        await store.SaveAsync(expected);
+        var actual = await store.LoadAsync();
+
+        TestSuite.Equal(expected, actual);
+        TestSuite.Equal(true, File.Exists(path));
+        TestSuite.Equal(false, File.Exists($"{path}.tmp"));
+    }
+    finally
+    {
+        if (Directory.Exists(directory))
+            Directory.Delete(directory, true);
+    }
+});
+
+await tests.RunAsync("malformed and undefined settings values fall back to defaults", async () =>
+{
+    var directory = Path.Combine(Path.GetTempPath(), $"QuickConvertSettings-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(directory);
+    var path = Path.Combine(directory, "settings.json");
+    try
+    {
+        var store = new JsonSettingsStore(path);
+        await File.WriteAllTextAsync(path, "{broken json");
+        TestSuite.Equal(QuickConvertSettings.Defaults, await store.LoadAsync());
+
+        await File.WriteAllTextAsync(path, """
+            {"qualityPreset":999,"outputDirectoryMode":"Adjacent","openFolderOnCompletion":false}
+            """);
+        TestSuite.Equal(QuickConvertSettings.Defaults, await store.LoadAsync());
+
+        await File.WriteAllTextAsync(path, """
+            {"qualityPreset":"Unknown","outputDirectoryMode":"Adjacent","openFolderOnCompletion":false}
+            """);
+        TestSuite.Equal(QuickConvertSettings.Defaults, await store.LoadAsync());
+    }
+    finally
+    {
+        Directory.Delete(directory, true);
+    }
+});
+
+await tests.RunAsync("sequential settings saves publish the newest complete value", async () =>
+{
+    var directory = Path.Combine(Path.GetTempPath(), $"QuickConvertSettings-{Guid.NewGuid():N}");
+    var path = Path.Combine(directory, "settings.json");
+    try
+    {
+        var store = new JsonSettingsStore(path);
+        await store.SaveAsync(QuickConvertSettings.Defaults);
+        var newest = new QuickConvertSettings(
+            ConversionPreset.Economy,
+            OutputDirectoryMode.DownloadsQuickConvert,
+            true);
+        await store.SaveAsync(newest);
+
+        TestSuite.Equal(newest, await store.LoadAsync());
+        TestSuite.Equal(false, File.Exists($"{path}.tmp"));
     }
     finally
     {
