@@ -8,3 +8,4 @@ dist/
 *.suo
 *.quickconvert.partial
 .worktrees/
+.superpowers/
