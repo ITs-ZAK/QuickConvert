@@ -344,6 +344,29 @@ tests.Run("installer uses QuickConvert branding assets", () =>
         installer.Contains(@"UninstallDisplayIcon={app}\{#MyAppExeName}"));
 });
 
+tests.Run("v0.2.0 release version and installer branding stay aligned", () =>
+{
+    var root = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    var buildProps = File.ReadAllText(Path.Combine(root, "Directory.Build.props"));
+    var installer = File.ReadAllText(Path.Combine(root, "installer", "QuickConvert.iss"));
+
+    TestSuite.Equal(true, buildProps.Contains("<Version>0.2.0</Version>", StringComparison.Ordinal));
+    TestSuite.Equal(true, installer.Contains("#define MyAppVersion \"0.2.0\"", StringComparison.Ordinal));
+    TestSuite.Equal(true, installer.Contains(
+        "OutputBaseFilename=QuickConvert-{#MyAppVersion}-win-x64-setup",
+        StringComparison.Ordinal));
+    TestSuite.Equal(true, installer.Contains(
+        @"SetupIconFile=..\assets\branding\quickconvert.ico",
+        StringComparison.Ordinal));
+    TestSuite.Equal(true, installer.Contains(
+        @"WizardSmallImageFile=..\assets\branding\quickconvert-wizard-small.png",
+        StringComparison.Ordinal));
+    TestSuite.Equal(true, installer.Contains(
+        @"UninstallDisplayIcon={app}\{#MyAppExeName}",
+        StringComparison.Ordinal));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(
