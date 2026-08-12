@@ -193,6 +193,27 @@ tests.Run("dark title bar ignores unavailable DWM without blocking startup", () 
     TestSuite.Equal(false, DarkTitleBar.TryApply(nint.Zero, MissingDwm));
 });
 
+tests.Run("application embeds branding and applies dark title bar after handle creation", () =>
+{
+    var root = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    var project = File.ReadAllText(Path.Combine(
+        root, "src", "QuickConvert.App", "QuickConvert.App.csproj"));
+    var xaml = File.ReadAllText(Path.Combine(
+        root, "src", "QuickConvert.App", "MainWindow.xaml"));
+    var codeBehind = File.ReadAllText(Path.Combine(
+        root, "src", "QuickConvert.App", "MainWindow.xaml.cs"));
+
+    TestSuite.Equal(
+        true,
+        project.Contains("<ApplicationIcon>../../assets/branding/quickconvert.ico</ApplicationIcon>"));
+    TestSuite.Equal(true, project.Contains("Link=\"Assets/quickconvert.ico\""));
+    TestSuite.Equal(true, xaml.Contains("Icon=\"Assets/quickconvert.ico\""));
+    TestSuite.Equal(true, xaml.Contains("Data=\"M42.5 39.5", StringComparison.Ordinal));
+    TestSuite.Equal(true, codeBehind.Contains("OnSourceInitialized", StringComparison.Ordinal));
+    TestSuite.Equal(true, codeBehind.Contains("DarkTitleBar.TryApply", StringComparison.Ordinal));
+});
+
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
     TestSuite.Equal(

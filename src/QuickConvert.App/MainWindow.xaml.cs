@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows;
+using System.Windows.Interop;
 using Forms = System.Windows.Forms;
 
 namespace QuickConvert.App;
@@ -33,6 +34,12 @@ public partial class MainWindow : Window
             _allowClose = true;
             Close();
         });
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        DarkTitleBar.TryApply(new WindowInteropHelper(this).Handle);
     }
 
     protected override void OnClosing(CancelEventArgs e)

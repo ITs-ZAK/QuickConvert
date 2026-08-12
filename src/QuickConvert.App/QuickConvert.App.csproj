@@ -5,8 +5,13 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>QuickConvert</AssemblyName>
+    <ApplicationIcon>../../assets/branding/quickconvert.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../QuickConvert.Core/QuickConvert.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="../../assets/branding/quickconvert.ico"
+              Link="Assets/quickconvert.ico" />
   </ItemGroup>
 </Project>
