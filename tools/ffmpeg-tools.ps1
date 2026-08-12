@@ -96,6 +96,69 @@ function Find-QuickConvertFfmpegPair {
     return Select-QuickConvertFfmpegPair -Candidates $candidates.ToArray()
 }
 
+function ConvertTo-QuickConvertWindowsArgument {
+    param([AllowEmptyString()][Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value.Length -gt 0 -and $Value -notmatch '[\s"]') {
+        return $Value
+    }
+
+    $builder = [System.Text.StringBuilder]::new()
+    $null = $builder.Append('"')
+    $backslashCount = 0
+    foreach ($character in $Value.ToCharArray()) {
+        if ($character -eq '\') {
+            $backslashCount++
+            continue
+        }
+
+        if ($character -eq '"') {
+            $null = $builder.Append('\', ($backslashCount * 2) + 1)
+            $null = $builder.Append('"')
+        }
+        else {
+            if ($backslashCount -gt 0) {
+                $null = $builder.Append('\', $backslashCount)
+            }
+            $null = $builder.Append($character)
+        }
+        $backslashCount = 0
+    }
+
+    if ($backslashCount -gt 0) {
+        $null = $builder.Append('\', $backslashCount * 2)
+    }
+    $null = $builder.Append('"')
+    return $builder.ToString()
+}
+
+function New-QuickConvertProcessStartInfo {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string[]]$Arguments
+    )
+
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $Path
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+
+    if ($null -ne $startInfo.PSObject.Properties["ArgumentList"]) {
+        foreach ($argument in $Arguments) {
+            $startInfo.ArgumentList.Add($argument)
+        }
+    }
+    else {
+        $startInfo.Arguments = (($Arguments | ForEach-Object {
+            ConvertTo-QuickConvertWindowsArgument -Value $_
+        }) -join " ")
+    }
+
+    return $startInfo
+}
+
 function Test-QuickConvertExecutable {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
@@ -116,14 +179,29 @@ function Test-QuickConvertExecutable {
         $ProcessRunner = {
             param([string]$Path, [string[]]$Arguments)
 
-            $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-            $startInfo.FileName = $Path
-            $startInfo.Arguments = "-version"
-            $startInfo.UseShellExecute = $false
-            $startInfo.CreateNoWindow = $true
-            $process = [System.Diagnostics.Process]::Start($startInfo)
-            $process.WaitForExit()
-            return $process.ExitCode
+            $startInfo = New-QuickConvertProcessStartInfo -Path $Path -Arguments $Arguments
+            $process = [System.Diagnostics.Process]::new()
+            $process.StartInfo = $startInfo
+            try {
+                if (-not $process.Start()) {
+                    throw "Failed to start tool validation process: $Path"
+                }
+
+                $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+                $stderrTask = $process.StandardError.ReadToEndAsync()
+                if (-not $process.WaitForExit(15000)) {
+                    $process.Kill()
+                    $process.WaitForExit()
+                    throw "Tool validation timed out after 15 seconds: $Path"
+                }
+
+                $null = $stdoutTask.GetAwaiter().GetResult()
+                $null = $stderrTask.GetAwaiter().GetResult()
+                return $process.ExitCode
+            }
+            finally {
+                $process.Dispose()
+            }
         }
     }
 

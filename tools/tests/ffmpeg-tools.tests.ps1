@@ -17,7 +17,8 @@ function Assert-True {
 function Assert-Throws {
     param(
         [Parameter(Mandatory = $true)][scriptblock]$Action,
-        [Parameter(Mandatory = $true)][string]$Message
+        [Parameter(Mandatory = $true)][string]$Message,
+        [string]$ExpectedMessage
     )
 
     $threw = $false
@@ -26,6 +27,9 @@ function Assert-Throws {
     }
     catch {
         $threw = $true
+        if ($ExpectedMessage -and $_.Exception.Message -notlike "*$ExpectedMessage*") {
+            throw "Expected exception containing '$ExpectedMessage', got '$($_.Exception.Message)'."
+        }
     }
 
     Assert-True -Condition $threw -Message $Message
@@ -63,6 +67,18 @@ try {
 
     Assert-Throws -Message "An incomplete pair must be rejected." -Action {
         Select-QuickConvertFfmpegPair -Candidates @($candidates | Where-Object { $_.Path.StartsWith($incompleteRoot) })
+    } -ExpectedMessage "complete standalone FFmpeg/FFprobe pair"
+
+    $startInfo = New-QuickConvertProcessStartInfo -Path (Join-Path $realRoot "ffmpeg.exe") -Arguments @("-version")
+    Assert-True -Condition (-not $startInfo.UseShellExecute) -Message "Production validation must not invoke a shell."
+    Assert-True -Condition $startInfo.CreateNoWindow -Message "Production validation must not create a window."
+    Assert-True -Condition $startInfo.RedirectStandardOutput -Message "Production validation must drain stdout."
+    Assert-True -Condition $startInfo.RedirectStandardError -Message "Production validation must drain stderr."
+    if ($null -ne $startInfo.PSObject.Properties["ArgumentList"]) {
+        Assert-True -Condition ($startInfo.ArgumentList.Count -eq 1 -and $startInfo.ArgumentList[0] -eq "-version") -Message "Production validation did not preserve the argument array."
+    }
+    else {
+        Assert-True -Condition ($startInfo.Arguments -eq "-version") -Message "Legacy production validation did not preserve the argument array."
     }
 
     $copyRoot = Join-Path $tempRoot "copied"
@@ -86,7 +102,7 @@ try {
     }
     Assert-Throws -Message "A nonzero -version result must stop tool preparation." -Action {
         Test-QuickConvertExecutable -Path $pair.FfmpegPath -ExpectedName "ffmpeg" -ProcessRunner $failingRunner
-    }
+    } -ExpectedMessage "failed its -version smoke test"
 
     Write-Host "PASS: standalone FFmpeg tool tests"
 }
