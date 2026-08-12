@@ -280,6 +280,29 @@ tests.Run("application embeds branding and applies dark title bar after handle c
     TestSuite.Equal(true, codeBehind.Contains("DarkTitleBar.TryApply", StringComparison.Ordinal));
 });
 
+tests.Run("completion folder opens only for a successful conversion", () =>
+{
+    var outputs = new[] { @"C:\Output\converted.mp3" };
+
+    TestSuite.Equal(
+        @"C:\Output",
+        CompletionFolderPolicy.GetFolder("convert", JobStatus.Completed, true, outputs));
+    TestSuite.Equal(null, CompletionFolderPolicy.GetFolder("convert", JobStatus.Completed, false, outputs));
+    TestSuite.Equal(null, CompletionFolderPolicy.GetFolder("convert", JobStatus.Failed, true, outputs));
+    TestSuite.Equal(null, CompletionFolderPolicy.GetFolder("convert", JobStatus.Canceled, true, outputs));
+    TestSuite.Equal(null, CompletionFolderPolicy.GetFolder("download", JobStatus.Completed, true, outputs));
+    TestSuite.Equal(null, CompletionFolderPolicy.GetFolder("convert", JobStatus.Completed, true, []));
+});
+
+tests.Run("format empty state distinguishes no files from incompatible files", () =>
+{
+    TestSuite.Equal("Najpierw wybierz pliki", FormatEmptyState.GetMessage(0, false));
+    TestSuite.Equal(
+        "Brak wspólnego formatu dla tego zestawu plików",
+        FormatEmptyState.GetMessage(2, false));
+    TestSuite.Equal(string.Empty, FormatEmptyState.GetMessage(1, true));
+});
+
 tests.Run("installer uses QuickConvert branding assets", () =>
 {
     var root = Path.GetFullPath(Path.Combine(

@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using QuickConvert.Core.Conversion;
 using QuickConvert.Core.Jobs;
 using QuickConvert.Core.Messaging;
+using QuickConvert.Core.Settings;
 
 namespace QuickConvert.App;
 
@@ -18,6 +19,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
     private readonly ConversionEngine _conversion;
     private readonly DownloadEngine _downloader;
     private readonly JsonHistoryStore _historyStore;
+    private readonly JsonSettingsStore _settingsStore;
     private readonly string _logPath;
     private readonly SynchronizationContext _uiContext;
     private readonly HashSet<string> _recordedJobs = [];
@@ -27,6 +29,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
     private string _animationWarning = string.Empty;
     private string _updateMessage = string.Empty;
     private string? _updateUrl;
+    private ConversionSettingChoice<ConversionPreset> _selectedQuality = null!;
+    private ConversionSettingChoice<OutputDirectoryMode> _selectedOutputDirectory = null!;
+    private bool _openFolderOnCompletion;
+    private bool _loadingSettings;
 
     public MainViewModel()
     {
@@ -35,18 +41,23 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         var ffmpeg = ResolveTool(baseDirectory, "ffmpeg.exe");
         var ytDlp = ResolveTool(baseDirectory, "yt-dlp.exe");
         var runner = new SystemProcessRunner();
-        _conversion = new ConversionEngine(ffmpeg, runner);
-        _downloader = new DownloadEngine(ytDlp, runner);
 
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "QuickConvert");
-        _historyStore = new JsonHistoryStore(Path.Combine(dataDirectory, "history.json"));
-        _logPath = Path.Combine(dataDirectory, "logs", "quickconvert.log");
         DownloadDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             "Downloads",
             "QuickConvert");
+        _conversion = new ConversionEngine(ffmpeg, runner, DownloadDirectory);
+        _downloader = new DownloadEngine(ytDlp, runner);
+        _historyStore = new JsonHistoryStore(Path.Combine(dataDirectory, "history.json"));
+        _settingsStore = new JsonSettingsStore(Path.Combine(dataDirectory, "settings.json"));
+        _logPath = Path.Combine(dataDirectory, "logs", "quickconvert.log");
+
+        _selectedQuality = QualityChoices.Single(choice => choice.Value == ConversionPreset.Balanced);
+        _selectedOutputDirectory = OutputDirectoryChoices.Single(
+            choice => choice.Value == OutputDirectoryMode.Adjacent);
 
         ConvertCommand = new RelayCommand(
             parameter => StartConversion(parameter as string),
@@ -95,17 +106,30 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
                 while (History.Count > 50)
                     History.RemoveAt(History.Count - 1);
                 await AppendLogAsync(job);
+                OpenCompletedFolder(job);
                 JobFinished?.Invoke(job);
             }
         }, null);
 
         _ = LoadHistoryAsync();
+        _ = LoadSettingsAsync();
         _ = CheckUpdatesAsync(dataDirectory, ytDlp);
     }
 
     public ObservableCollection<string> CompatibleFormats { get; } = [];
     public ObservableCollection<QueuedJob> Jobs { get; } = [];
     public ObservableCollection<JobHistoryEntry> History { get; } = [];
+    public IReadOnlyList<ConversionSettingChoice<ConversionPreset>> QualityChoices { get; } =
+    [
+        new(ConversionPreset.Economy, "Oszczędna"),
+        new(ConversionPreset.Balanced, "Zbalansowana"),
+        new(ConversionPreset.Highest, "Najwyższa")
+    ];
+    public IReadOnlyList<ConversionSettingChoice<OutputDirectoryMode>> OutputDirectoryChoices { get; } =
+    [
+        new(OutputDirectoryMode.Adjacent, "Obok oryginału"),
+        new(OutputDirectoryMode.DownloadsQuickConvert, @"Pobrane\QuickConvert")
+    ];
     public ICommand ConvertCommand { get; }
     public ICommand SelectFilesCommand { get; }
     public ICommand CancelCommand { get; }
@@ -115,6 +139,38 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
     public ICommand OpenLogCommand { get; }
     public ICommand ClearLocalDataCommand { get; }
     public string DownloadDirectory { get; }
+
+    public ConversionSettingChoice<ConversionPreset> SelectedQuality
+    {
+        get => _selectedQuality;
+        set
+        {
+            var normalized = value ?? QualityChoices[1];
+            if (Set(ref _selectedQuality, normalized))
+                SaveSettingsIfReady();
+        }
+    }
+
+    public ConversionSettingChoice<OutputDirectoryMode> SelectedOutputDirectory
+    {
+        get => _selectedOutputDirectory;
+        set
+        {
+            var normalized = value ?? OutputDirectoryChoices[0];
+            if (Set(ref _selectedOutputDirectory, normalized))
+                SaveSettingsIfReady();
+        }
+    }
+
+    public bool OpenFolderOnCompletion
+    {
+        get => _openFolderOnCompletion;
+        set
+        {
+            if (Set(ref _openFolderOnCompletion, value))
+                SaveSettingsIfReady();
+        }
+    }
 
     public string SelectionTitle
     {
@@ -129,6 +185,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
     }
 
     public bool HasActiveJobs => Jobs.Any(job => job.Status is JobStatus.Queued or JobStatus.Running);
+    public bool HasCompatibleFormats => CompatibleFormats.Count > 0;
+    public string FormatEmptyMessage => FormatEmptyState.GetMessage(
+        _selectedPaths.Length,
+        HasCompatibleFormats);
 
     public string UpdateMessage
     {
@@ -196,6 +256,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         CompatibleFormats.Clear();
         foreach (var format in FormatCatalog.GetCompatibleOutputs(_selectedPaths))
             CompatibleFormats.Add(format.ToUpperInvariant());
+        OnPropertyChanged(nameof(HasCompatibleFormats));
+        OnPropertyChanged(nameof(FormatEmptyMessage));
         AnimationWarning = _selectedPaths.Any(path =>
                 Path.GetExtension(path) is ".gif" or ".webp")
             ? "Przy formacie statycznym zostanie użyta pierwsza klatka."
@@ -210,8 +272,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         var request = new ConvertFilesRequest(
             _selectedPaths.ToArray(),
             format.ToLowerInvariant(),
-            ConversionPreset.Balanced,
-            OutputDirectoryMode.Adjacent);
+            SelectedQuality.Value,
+            SelectedOutputDirectory.Value);
         EnqueueWithRetry(
             SelectionTitle,
             "convert",
@@ -250,6 +312,50 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         }, null);
     }
 
+    private async Task LoadSettingsAsync()
+    {
+        var settings = await _settingsStore.LoadAsync();
+        _uiContext.Post(_ =>
+        {
+            _loadingSettings = true;
+            try
+            {
+                SelectedQuality = QualityChoices.First(choice =>
+                    choice.Value == settings.QualityPreset);
+                SelectedOutputDirectory = OutputDirectoryChoices.First(choice =>
+                    choice.Value == settings.OutputDirectoryMode);
+                OpenFolderOnCompletion = settings.OpenFolderOnCompletion;
+            }
+            finally
+            {
+                _loadingSettings = false;
+            }
+        }, null);
+    }
+
+    private void SaveSettingsIfReady()
+    {
+        if (!_loadingSettings)
+            _ = SaveSettingsIgnoringErrorsAsync();
+    }
+
+    private async Task SaveSettingsIgnoringErrorsAsync()
+    {
+        try
+        {
+            await _settingsStore.SaveAsync(new QuickConvertSettings(
+                SelectedQuality.Value,
+                SelectedOutputDirectory.Value,
+                OpenFolderOnCompletion));
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
     private async Task CheckUpdatesAsync(string dataDirectory, string ytDlpPath)
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 1, 0);
@@ -285,6 +391,31 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         Process.Start(startInfo);
     }
 
+    private void OpenCompletedFolder(QueuedJob job)
+    {
+        var folder = CompletionFolderPolicy.GetFolder(
+            job.Kind,
+            job.Status,
+            OpenFolderOnCompletion,
+            job.OutputPaths);
+        if (folder is null)
+            return;
+
+        try
+        {
+            var startInfo = new ProcessStartInfo("explorer.exe")
+            {
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add(folder);
+            Process.Start(startInfo);
+        }
+        catch (Exception exception) when (
+            exception is InvalidOperationException or Win32Exception or IOException)
+        {
+        }
+    }
+
     private void OpenUpdate()
     {
         if (_updateUrl is null)
@@ -318,12 +449,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
             File.Delete(_logPath);
     }
 
-    private void Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    private bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
-            return;
+            return false;
         field = value;
         OnPropertyChanged(propertyName);
+        return true;
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>

@@ -8,6 +8,10 @@
   <ItemGroup>
     <Compile Include="../../src/QuickConvert.App/DarkTitleBar.cs"
              Link="Ui/DarkTitleBar.cs" />
+    <Compile Include="../../src/QuickConvert.App/CompletionFolderPolicy.cs"
+             Link="Ui/CompletionFolderPolicy.cs" />
+    <Compile Include="../../src/QuickConvert.App/FormatEmptyState.cs"
+             Link="Ui/FormatEmptyState.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../../src/QuickConvert.App/App.xaml"
