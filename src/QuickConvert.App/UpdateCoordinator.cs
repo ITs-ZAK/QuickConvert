@@ -50,7 +50,7 @@ internal sealed class UpdateCoordinator(string statePath, string ytDlpPath)
                 client.DefaultRequestHeaders.UserAgent.Add(
                     new ProductInfoHeaderValue("QuickConvert", currentVersion.ToString()));
                 var json = await client.GetStringAsync(
-                    "https://api.github.com/repos/zacz2/QuickConvert/releases/latest",
+                    ReleaseEndpoints.LatestReleaseApi,
                     cancellationToken);
                 release = GitHubReleaseParser.Parse(json, currentVersion);
             }

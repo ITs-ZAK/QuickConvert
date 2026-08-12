@@ -113,11 +113,14 @@ tests.Run("update schedule enforces its complete interval", () =>
 
 tests.Run("GitHub release parser reports only a newer semantic version", () =>
 {
-    const string json = """{"tag_name":"v1.2.0","html_url":"https://github.com/zacz2/QuickConvert/releases/tag/v1.2.0"}""";
+    TestSuite.Equal(
+        "https://api.github.com/repos/ITs-ZAK/QuickConvert/releases/latest",
+        ReleaseEndpoints.LatestReleaseApi);
+    const string json = """{"tag_name":"v1.2.0","html_url":"https://github.com/ITs-ZAK/QuickConvert/releases/tag/v1.2.0"}""";
     var release = GitHubReleaseParser.Parse(json, new Version(1, 1, 0));
     TestSuite.Equal("1.2.0", release!.Version.ToString());
     TestSuite.Equal(
-        "https://github.com/zacz2/QuickConvert/releases/tag/v1.2.0",
+        "https://github.com/ITs-ZAK/QuickConvert/releases/tag/v1.2.0",
         release.Url);
     TestSuite.Equal(null, GitHubReleaseParser.Parse(json, new Version(1, 2, 0)));
 });
