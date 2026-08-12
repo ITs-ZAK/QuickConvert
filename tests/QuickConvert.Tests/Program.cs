@@ -59,14 +59,62 @@ tests.Run("MP4 arguments use H264 AAC and never invoke a shell", () =>
         @"C:\Media\input.mkv",
         @"C:\Media\output.quickconvert.partial.mp4",
         "mp4",
-        ConversionPreset.Default);
+        ConversionPreset.Balanced);
 
     TestSuite.Equal(false, command.UseShellExecute);
     TestSuite.SequenceEqual(
         ["-hide_banner", "-nostdin", "-y", "-i", @"C:\Media\input.mkv",
-         "-c:v", "libx264", "-crf", "20", "-c:a", "aac", "-b:a", "192k",
+         "-c:v", "libx264", "-crf", "23", "-c:a", "aac", "-b:a", "192k",
          "-progress", "pipe:1", "-nostats", @"C:\Media\output.quickconvert.partial.mp4"],
         command.Arguments);
+});
+
+tests.Run("lossy FFmpeg arguments follow the selected quality preset", () =>
+{
+    var cases = new[]
+    {
+        ("mp4", ConversionPreset.Economy, new[] { new[] { "-crf", "28" }, new[] { "-b:a", "128k" } }),
+        ("mp4", ConversionPreset.Balanced, new[] { new[] { "-crf", "23" }, new[] { "-b:a", "192k" } }),
+        ("mp4", ConversionPreset.Highest, new[] { new[] { "-crf", "18" }, new[] { "-b:a", "256k" } }),
+        ("webm", ConversionPreset.Economy, new[] { new[] { "-crf", "38" }, new[] { "-b:a", "96k" } }),
+        ("webm", ConversionPreset.Balanced, new[] { new[] { "-crf", "33" }, new[] { "-b:a", "128k" } }),
+        ("webm", ConversionPreset.Highest, new[] { new[] { "-crf", "28" }, new[] { "-b:a", "192k" } }),
+        ("mp3", ConversionPreset.Economy, new[] { new[] { "-b:a", "128k" } }),
+        ("mp3", ConversionPreset.Balanced, new[] { new[] { "-b:a", "192k" } }),
+        ("mp3", ConversionPreset.Highest, new[] { new[] { "-b:a", "320k" } }),
+        ("m4a", ConversionPreset.Economy, new[] { new[] { "-b:a", "128k" } }),
+        ("m4a", ConversionPreset.Balanced, new[] { new[] { "-b:a", "192k" } }),
+        ("m4a", ConversionPreset.Highest, new[] { new[] { "-b:a", "320k" } }),
+        ("opus", ConversionPreset.Economy, new[] { new[] { "-b:a", "96k" } }),
+        ("opus", ConversionPreset.Balanced, new[] { new[] { "-b:a", "128k" } }),
+        ("opus", ConversionPreset.Highest, new[] { new[] { "-b:a", "192k" } }),
+        ("jpg", ConversionPreset.Economy, new[] { new[] { "-q:v", "5" } }),
+        ("jpg", ConversionPreset.Balanced, new[] { new[] { "-q:v", "3" } }),
+        ("jpg", ConversionPreset.Highest, new[] { new[] { "-q:v", "2" } }),
+        ("webp", ConversionPreset.Economy, new[] { new[] { "-quality", "75" } }),
+        ("webp", ConversionPreset.Balanced, new[] { new[] { "-quality", "85" } }),
+        ("webp", ConversionPreset.Highest, new[] { new[] { "-quality", "95" } })
+    };
+
+    foreach (var (format, preset, expectedSequences) in cases)
+    {
+        var command = FfmpegCommandBuilder.Build("input", $"output.{format}", format, preset);
+        foreach (var expected in expectedSequences)
+            ContainsArguments(command.Arguments, expected);
+    }
+});
+
+tests.Run("lossless FFmpeg arguments do not change with quality preset", () =>
+{
+    foreach (var format in new[] { "flac", "wav", "png", "gif" })
+    {
+        var economy = FfmpegCommandBuilder.Build("input", $"output.{format}", format, ConversionPreset.Economy);
+        var balanced = FfmpegCommandBuilder.Build("input", $"output.{format}", format, ConversionPreset.Balanced);
+        var highest = FfmpegCommandBuilder.Build("input", $"output.{format}", format, ConversionPreset.Highest);
+
+        TestSuite.SequenceEqual(economy.Arguments, balanced.Arguments);
+        TestSuite.SequenceEqual(balanced.Arguments, highest.Arguments);
+    }
 });
 
 tests.Run("native message accepts a whitelisted extension and valid request", () =>
@@ -343,7 +391,7 @@ await tests.RunAsync("conversion engine publishes output only after successful t
             @"C:\Tools\ffmpeg.exe",
             new OutputCreatingProcessRunner(exitCode: 0));
         var result = await engine.ConvertAsync(
-            new ConvertFilesRequest([source], "mp3", ConversionPreset.Default, OutputDirectoryMode.Adjacent),
+            new ConvertFilesRequest([source], "mp3", ConversionPreset.Balanced, OutputDirectoryMode.Adjacent),
             null,
             CancellationToken.None);
 
@@ -371,7 +419,7 @@ await tests.RunAsync("failed conversion removes its partial output", async () =>
             @"C:\Tools\ffmpeg.exe",
             new OutputCreatingProcessRunner(exitCode: 1));
         var result = await engine.ConvertAsync(
-            new ConvertFilesRequest([source], "mp3", ConversionPreset.Default, OutputDirectoryMode.Adjacent),
+            new ConvertFilesRequest([source], "mp3", ConversionPreset.Balanced, OutputDirectoryMode.Adjacent),
             null,
             CancellationToken.None);
 
@@ -537,11 +585,11 @@ if (args.Contains("--integration", StringComparer.OrdinalIgnoreCase))
             var engine = new ConversionEngine("ffmpeg.exe", runner);
             var requests = new[]
             {
-                new ConvertFilesRequest([Path.Combine(directory, "tone.wav")], "mp3", ConversionPreset.Default, OutputDirectoryMode.Adjacent),
-                new ConvertFilesRequest([Path.Combine(directory, "clip.mp4")], "webm", ConversionPreset.Default, OutputDirectoryMode.Adjacent),
-                new ConvertFilesRequest([Path.Combine(directory, "clip.mp4")], "mp3", ConversionPreset.Default, OutputDirectoryMode.Adjacent),
-                new ConvertFilesRequest([Path.Combine(directory, "still.png")], "webp", ConversionPreset.Default, OutputDirectoryMode.Adjacent),
-                new ConvertFilesRequest([Path.Combine(directory, "animated.gif")], "jpg", ConversionPreset.Default, OutputDirectoryMode.Adjacent)
+                new ConvertFilesRequest([Path.Combine(directory, "tone.wav")], "mp3", ConversionPreset.Balanced, OutputDirectoryMode.Adjacent),
+                new ConvertFilesRequest([Path.Combine(directory, "clip.mp4")], "webm", ConversionPreset.Balanced, OutputDirectoryMode.Adjacent),
+                new ConvertFilesRequest([Path.Combine(directory, "clip.mp4")], "mp3", ConversionPreset.Balanced, OutputDirectoryMode.Adjacent),
+                new ConvertFilesRequest([Path.Combine(directory, "still.png")], "webp", ConversionPreset.Balanced, OutputDirectoryMode.Adjacent),
+                new ConvertFilesRequest([Path.Combine(directory, "animated.gif")], "jpg", ConversionPreset.Balanced, OutputDirectoryMode.Adjacent)
             };
 
             foreach (var request in requests)
@@ -596,6 +644,20 @@ static (int Width, int Height) ReadPngSize(string path)
         Array.Reverse(heightBytes);
     }
     return (BitConverter.ToInt32(widthBytes), BitConverter.ToInt32(heightBytes));
+}
+
+static void ContainsArguments(
+    IReadOnlyList<string> arguments,
+    params string[] expectedSequence)
+{
+    for (var start = 0; start <= arguments.Count - expectedSequence.Length; start++)
+    {
+        if (arguments.Skip(start).Take(expectedSequence.Length).SequenceEqual(expectedSequence))
+            return;
+    }
+
+    throw new InvalidOperationException(
+        $"Expected argument sequence [{string.Join(", ", expectedSequence)}].");
 }
 
 static async Task GenerateFixtureAsync(SystemProcessRunner runner, IReadOnlyList<string> arguments)

@@ -2,7 +2,9 @@ namespace QuickConvert.Core.Jobs;
 
 public enum ConversionPreset
 {
-    Default
+    Economy,
+    Balanced,
+    Highest
 }
 
 public enum OutputDirectoryMode

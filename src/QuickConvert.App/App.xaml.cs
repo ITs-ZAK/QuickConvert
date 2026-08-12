@@ -123,6 +123,6 @@ public partial class App : System.Windows.Application
         return paths.Length == 0
             ? null
             : IpcEnvelope.ForConvert(new ConvertFilesRequest(
-                paths, string.Empty, ConversionPreset.Default, OutputDirectoryMode.Adjacent));
+                paths, string.Empty, ConversionPreset.Balanced, OutputDirectoryMode.Adjacent));
     }
 }

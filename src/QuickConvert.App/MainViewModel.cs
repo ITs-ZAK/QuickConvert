@@ -209,7 +209,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         var request = new ConvertFilesRequest(
             _selectedPaths.ToArray(),
             format.ToLowerInvariant(),
-            ConversionPreset.Default,
+            ConversionPreset.Balanced,
             OutputDirectoryMode.Adjacent);
         EnqueueWithRetry(
             SelectionTitle,
