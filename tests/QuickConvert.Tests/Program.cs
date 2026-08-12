@@ -344,15 +344,15 @@ tests.Run("installer uses QuickConvert branding assets", () =>
         installer.Contains(@"UninstallDisplayIcon={app}\{#MyAppExeName}"));
 });
 
-tests.Run("v0.2.0 release version and installer branding stay aligned", () =>
+tests.Run("v0.2.1 release version and installer branding stay aligned", () =>
 {
     var root = Path.GetFullPath(Path.Combine(
         AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
     var buildProps = File.ReadAllText(Path.Combine(root, "Directory.Build.props"));
     var installer = File.ReadAllText(Path.Combine(root, "installer", "QuickConvert.iss"));
 
-    TestSuite.Equal(true, buildProps.Contains("<Version>0.2.0</Version>", StringComparison.Ordinal));
-    TestSuite.Equal(true, installer.Contains("#define MyAppVersion \"0.2.0\"", StringComparison.Ordinal));
+    TestSuite.Equal(true, buildProps.Contains("<Version>0.2.1</Version>", StringComparison.Ordinal));
+    TestSuite.Equal(true, installer.Contains("#define MyAppVersion \"0.2.1\"", StringComparison.Ordinal));
     TestSuite.Equal(true, installer.Contains(
         "OutputBaseFilename=QuickConvert-{#MyAppVersion}-win-x64-setup",
         StringComparison.Ordinal));
