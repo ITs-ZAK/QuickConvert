@@ -62,7 +62,8 @@ public partial class App : System.Windows.Application
                 var server = new SingleInstanceIpcServer(QuickConvertPipeName.ForCurrentUser());
                 await server.ReceiveOnceAsync(async envelope =>
                 {
-                    await Dispatcher.InvokeAsync(() => HandleEnvelopeAsync(envelope));
+                    var dispatched = Dispatcher.InvokeAsync(() => HandleEnvelopeAsync(envelope));
+                    await dispatched.Task.Unwrap();
                     return new IpcResponse(true, "accepted");
                 }, cancellationToken);
             }
@@ -82,18 +83,19 @@ public partial class App : System.Windows.Application
         if (_viewModel is null)
             return;
 
+        await _viewModel.SettingsLoaded;
         await _viewModel.HandleEnvelopeAsync(envelope);
-        ShowMainWindow();
+        if (BackgroundBehaviorPolicy.ShouldShowForEnvelope(
+                envelope.Operation,
+                _viewModel.RunInBackgroundDuringJobs))
+            ShowMainWindow();
     }
 
     private void ShowMainWindow()
     {
         if (_window is null)
             return;
-        _window.Show();
-        if (_window.WindowState == WindowState.Minimized)
-            _window.WindowState = WindowState.Normal;
-        _window.Activate();
+        _window.RestoreWindow();
     }
 
     protected override void OnExit(ExitEventArgs e)

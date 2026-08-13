@@ -303,6 +303,8 @@ tests.Run("application embeds branding and applies dark title bar after handle c
         root, "src", "QuickConvert.App", "MainWindow.xaml"));
     var codeBehind = File.ReadAllText(Path.Combine(
         root, "src", "QuickConvert.App", "MainWindow.xaml.cs"));
+    var appCode = File.ReadAllText(Path.Combine(
+        root, "src", "QuickConvert.App", "App.xaml.cs"));
 
     TestSuite.Equal(
         true,
@@ -312,6 +314,15 @@ tests.Run("application embeds branding and applies dark title bar after handle c
     TestSuite.Equal(true, xaml.Contains("Data=\"M42.5 39.5", StringComparison.Ordinal));
     TestSuite.Equal(true, codeBehind.Contains("OnSourceInitialized", StringComparison.Ordinal));
     TestSuite.Equal(true, codeBehind.Contains("DarkTitleBar.TryApply", StringComparison.Ordinal));
+    TestSuite.Equal(
+        true,
+        codeBehind.Contains("pack://application:,,,/Assets/quickconvert.ico", StringComparison.Ordinal));
+    TestSuite.Equal(false, codeBehind.Contains("SystemIcons.Application", StringComparison.Ordinal));
+    TestSuite.Equal(true, codeBehind.Contains("BackgroundBehaviorPolicy.GetCloseAction", StringComparison.Ordinal));
+    TestSuite.Equal(true, codeBehind.Contains("BackgroundBehaviorPolicy.ShouldShowTray", StringComparison.Ordinal));
+    TestSuite.Equal(true, appCode.Contains("await _viewModel.SettingsLoaded", StringComparison.Ordinal));
+    TestSuite.Equal(true, appCode.Contains("BackgroundBehaviorPolicy.ShouldShowForEnvelope", StringComparison.Ordinal));
+    TestSuite.Equal(true, appCode.Contains(".Task.Unwrap()", StringComparison.Ordinal));
 });
 
 tests.Run("completion folder opens only for a successful conversion", () =>
