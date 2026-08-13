@@ -527,6 +527,30 @@ await tests.RunAsync("missing settings file returns balanced adjacent defaults",
     TestSuite.Equal(true, settings.RunInBackgroundDuringJobs);
 });
 
+tests.Run("background policy keeps browser downloads hidden only when enabled", () =>
+{
+    TestSuite.Equal(false, BackgroundBehaviorPolicy.ShouldShowForEnvelope("download", true));
+    TestSuite.Equal(true, BackgroundBehaviorPolicy.ShouldShowForEnvelope("download", false));
+    TestSuite.Equal(true, BackgroundBehaviorPolicy.ShouldShowForEnvelope("convert", true));
+    TestSuite.Equal(true, BackgroundBehaviorPolicy.ShouldShowForEnvelope("activate", true));
+});
+
+tests.Run("background policy chooses close and tray behavior from jobs and preference", () =>
+{
+    TestSuite.Equal(
+        WindowCloseAction.HideToTray,
+        BackgroundBehaviorPolicy.GetCloseAction(hasActiveJobs: true, runInBackgroundDuringJobs: true));
+    TestSuite.Equal(
+        WindowCloseAction.KeepVisible,
+        BackgroundBehaviorPolicy.GetCloseAction(hasActiveJobs: true, runInBackgroundDuringJobs: false));
+    TestSuite.Equal(
+        WindowCloseAction.Close,
+        BackgroundBehaviorPolicy.GetCloseAction(hasActiveJobs: false, runInBackgroundDuringJobs: true));
+    TestSuite.Equal(true, BackgroundBehaviorPolicy.ShouldShowTray(true, true));
+    TestSuite.Equal(false, BackgroundBehaviorPolicy.ShouldShowTray(true, false));
+    TestSuite.Equal(false, BackgroundBehaviorPolicy.ShouldShowTray(false, true));
+});
+
 await tests.RunAsync("legacy settings enable background jobs when the property is missing", async () =>
 {
     var directory = Path.Combine(Path.GetTempPath(), $"QuickConvertSettings-{Guid.NewGuid():N}");

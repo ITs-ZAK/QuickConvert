@@ -12,6 +12,8 @@
              Link="Ui/CompletionFolderPolicy.cs" />
     <Compile Include="../../src/QuickConvert.App/FormatEmptyState.cs"
              Link="Ui/FormatEmptyState.cs" />
+    <Compile Include="../../src/QuickConvert.App/BackgroundBehaviorPolicy.cs"
+             Link="Ui/BackgroundBehaviorPolicy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../../src/QuickConvert.App/App.xaml"
