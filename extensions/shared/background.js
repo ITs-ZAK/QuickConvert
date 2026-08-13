@@ -1,13 +1,31 @@
 "use strict";
 
-const extensionApi = globalThis.browser ?? globalThis.chrome;
+const unavailable = () => ({ code: "app_unavailable" });
+const isDownload = message => Boolean(message && message.action === "download");
 
-extensionApi.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (!message || message.action !== "download") return false;
+function createFirefoxListener(browserApi) {
+  return message => {
+    if (!isDownload(message)) return false;
+    return browserApi.runtime
+      .sendNativeMessage("com.quickconvert.app", message.payload)
+      .then(response => response ?? unavailable())
+      .catch(unavailable);
+  };
+}
 
-  extensionApi.runtime
-    .sendNativeMessage("com.quickconvert.app", message.payload)
-    .then(response => sendResponse(response ?? { code: "app_unavailable" }))
-    .catch(() => sendResponse({ code: "app_unavailable" }));
-  return true;
-});
+function createChromeListener(chromeApi) {
+  return (message, _sender, sendResponse) => {
+    if (!isDownload(message)) return false;
+    chromeApi.runtime
+      .sendNativeMessage("com.quickconvert.app", message.payload)
+      .then(response => sendResponse(response ?? unavailable()))
+      .catch(() => sendResponse(unavailable()));
+    return true;
+  };
+}
+
+if (globalThis.browser) {
+  browser.runtime.onMessage.addListener(createFirefoxListener(browser));
+} else {
+  chrome.runtime.onMessage.addListener(createChromeListener(chrome));
+}
