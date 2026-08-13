@@ -24,6 +24,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
     private readonly SynchronizationContext _uiContext;
     private readonly HashSet<string> _recordedJobs = [];
     private readonly Dictionary<QueuedJob, Action> _retryActions = [];
+    private readonly TaskCompletionSource _settingsLoaded = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
     private string[] _selectedPaths = [];
     private string _selectionTitle = "Wybierz pliki albo użyj prawego przycisku myszy";
     private string _animationWarning = string.Empty;
@@ -32,6 +34,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
     private ConversionSettingChoice<ConversionPreset> _selectedQuality = null!;
     private ConversionSettingChoice<OutputDirectoryMode> _selectedOutputDirectory = null!;
     private bool _openFolderOnCompletion;
+    private bool _runInBackgroundDuringJobs = true;
     private bool _loadingSettings;
 
     public MainViewModel()
@@ -139,6 +142,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
     public ICommand OpenLogCommand { get; }
     public ICommand ClearLocalDataCommand { get; }
     public string DownloadDirectory { get; }
+    public Task SettingsLoaded => _settingsLoaded.Task;
 
     public ConversionSettingChoice<ConversionPreset> SelectedQuality
     {
@@ -168,6 +172,16 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
         set
         {
             if (Set(ref _openFolderOnCompletion, value))
+                SaveSettingsIfReady();
+        }
+    }
+
+    public bool RunInBackgroundDuringJobs
+    {
+        get => _runInBackgroundDuringJobs;
+        set
+        {
+            if (Set(ref _runInBackgroundDuringJobs, value))
                 SaveSettingsIfReady();
         }
     }
@@ -325,10 +339,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
                 SelectedOutputDirectory = OutputDirectoryChoices.First(choice =>
                     choice.Value == settings.OutputDirectoryMode);
                 OpenFolderOnCompletion = settings.OpenFolderOnCompletion;
+                RunInBackgroundDuringJobs = settings.RunInBackgroundDuringJobs;
             }
             finally
             {
                 _loadingSettings = false;
+                _settingsLoaded.TrySetResult();
             }
         }, null);
     }
@@ -346,7 +362,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IAsyncDisposable
             await _settingsStore.SaveAsync(new QuickConvertSettings(
                 SelectedQuality.Value,
                 SelectedOutputDirectory.Value,
-                OpenFolderOnCompletion));
+                OpenFolderOnCompletion,
+                RunInBackgroundDuringJobs));
         }
         catch (IOException)
         {

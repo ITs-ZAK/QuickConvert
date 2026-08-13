@@ -193,6 +193,7 @@
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="140" />
@@ -214,7 +215,15 @@
                                                   Content="Otwórz folder po zakończeniu"
                                                   IsChecked="{Binding OpenFolderOnCompletion}"
                                                   Style="{StaticResource DarkCheckBoxStyle}" />
-                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="2"
+                                        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,3,0,9">
+                                            <CheckBox Content="Pracuj w tle podczas zadań"
+                                                      IsChecked="{Binding RunInBackgroundDuringJobs}"
+                                                      Style="{StaticResource DarkCheckBoxStyle}" />
+                                            <TextBlock Text="Po zamknięciu okna aktywne zadania pozostaną w zasobniku."
+                                                       Style="{StaticResource MutedTextStyle}"
+                                                       Margin="24,3,0,0" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="4" Grid.ColumnSpan="2"
                                                    Text="FLAC, WAV, PNG i GIF nie zmieniają jakości. Oryginał zawsze pozostaje bez zmian."
                                                    Style="{StaticResource MutedTextStyle}" />
                                     </Grid>

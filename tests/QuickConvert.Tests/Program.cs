@@ -230,6 +230,7 @@ tests.Run("conversion settings XAML exposes dark controls and functional binding
         "ItemsSource=\"{Binding OutputDirectoryChoices}\"",
         "SelectedItem=\"{Binding SelectedOutputDirectory}\"",
         "IsChecked=\"{Binding OpenFolderOnCompletion}\"",
+        "IsChecked=\"{Binding RunInBackgroundDuringJobs}\"",
         "Text=\"{Binding FormatEmptyMessage}\"",
         "Binding=\"{Binding HasCompatibleFormats}\" Value=\"False\"",
         "Style=\"{StaticResource DarkExpanderStyle}\""
@@ -239,6 +240,14 @@ tests.Run("conversion settings XAML exposes dark controls and functional binding
     TestSuite.Equal(
         true,
         windowXaml.Contains("FLAC, WAV, PNG i GIF nie zmieniają jakości", StringComparison.Ordinal));
+    TestSuite.Equal(
+        true,
+        windowXaml.Contains("Pracuj w tle podczas zadań", StringComparison.Ordinal));
+    TestSuite.Equal(
+        true,
+        windowXaml.Contains(
+            "Po zamknięciu okna aktywne zadania pozostaną w zasobniku.",
+            StringComparison.Ordinal));
 });
 
 tests.Run("branding assets contain the selected Q mark and required icon sizes", () =>
