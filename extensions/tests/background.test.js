@@ -35,7 +35,11 @@ function loadChrome(sendNativeMessage) {
 }
 
 async function run() {
-  const acceptedFirefox = loadFirefox(() => Promise.resolve({ code: "accepted" }));
+  const acceptedFirefox = loadFirefox((host, payload) => {
+    assert.equal(host, "com.quickconvert.app");
+    assert.equal(payload.requestId, "req-1");
+    return Promise.resolve({ code: "accepted" });
+  });
   assert.deepEqual(
     JSON.parse(JSON.stringify(await acceptedFirefox(download))),
     { code: "accepted" });
@@ -52,7 +56,11 @@ async function run() {
   assert.equal(acceptedFirefox({ action: "ping" }), false);
 
   let chromeResponse;
-  const acceptedChrome = loadChrome(() => Promise.resolve({ code: "accepted" }));
+  const acceptedChrome = loadChrome((host, payload) => {
+    assert.equal(host, "com.quickconvert.app");
+    assert.equal(payload.requestId, "req-1");
+    return Promise.resolve({ code: "accepted" });
+  });
   assert.equal(acceptedChrome(download, {}, value => { chromeResponse = value; }), true);
   await Promise.resolve();
   assert.deepEqual(chromeResponse, { code: "accepted" });
