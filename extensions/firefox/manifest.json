@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "QuickConvert",
-  "version": "0.1.0",
+  "version": "0.2.2",
   "description": "Przekazuje do lokalnej aplikacji materiały, które możesz legalnie pobrać.",
   "permissions": ["activeTab", "storage", "nativeMessaging"],
   "action": {

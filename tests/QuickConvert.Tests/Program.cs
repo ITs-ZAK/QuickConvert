@@ -5,6 +5,7 @@ using QuickConvert.Core.Settings;
 using QuickConvert.Core.Updates;
 using QuickConvert.App;
 using System.Text;
+using System.Text.Json;
 
 var tests = new TestSuite();
 
@@ -364,15 +365,28 @@ tests.Run("installer uses QuickConvert branding assets", () =>
         installer.Contains(@"UninstallDisplayIcon={app}\{#MyAppExeName}"));
 });
 
-tests.Run("v0.2.1 release version and installer branding stay aligned", () =>
+tests.Run("v0.2.2 release and extension versions stay aligned", () =>
 {
     var root = Path.GetFullPath(Path.Combine(
         AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
     var buildProps = File.ReadAllText(Path.Combine(root, "Directory.Build.props"));
     var installer = File.ReadAllText(Path.Combine(root, "installer", "QuickConvert.iss"));
+    using var chromeManifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(
+        root, "extensions", "chrome", "manifest.json")));
+    using var firefoxManifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(
+        root, "extensions", "firefox", "manifest.json")));
 
-    TestSuite.Equal(true, buildProps.Contains("<Version>0.2.1</Version>", StringComparison.Ordinal));
-    TestSuite.Equal(true, installer.Contains("#define MyAppVersion \"0.2.1\"", StringComparison.Ordinal));
+    TestSuite.Equal(true, buildProps.Contains("<Version>0.2.2</Version>", StringComparison.Ordinal));
+    TestSuite.Equal(true, installer.Contains("#define MyAppVersion \"0.2.2\"", StringComparison.Ordinal));
+    TestSuite.Equal("0.2.2", chromeManifest.RootElement.GetProperty("version").GetString());
+    TestSuite.Equal("0.2.2", firefoxManifest.RootElement.GetProperty("version").GetString());
+    TestSuite.Equal(
+        "quickconvert@local",
+        firefoxManifest.RootElement
+            .GetProperty("browser_specific_settings")
+            .GetProperty("gecko")
+            .GetProperty("id")
+            .GetString());
     TestSuite.Equal(true, installer.Contains(
         "OutputBaseFilename=QuickConvert-{#MyAppVersion}-win-x64-setup",
         StringComparison.Ordinal));

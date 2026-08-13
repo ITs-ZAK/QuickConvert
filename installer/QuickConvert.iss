@@ -1,5 +1,5 @@
 #define MyAppName "QuickConvert"
-#define MyAppVersion "0.2.1"
+#define MyAppVersion "0.2.2"
 #define MyAppPublisher "QuickConvert contributors"
 #define MyAppExeName "QuickConvert.exe"
 
