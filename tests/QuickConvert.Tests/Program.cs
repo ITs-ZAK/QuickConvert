@@ -515,6 +515,28 @@ await tests.RunAsync("missing settings file returns balanced adjacent defaults",
     TestSuite.Equal(ConversionPreset.Balanced, settings.QualityPreset);
     TestSuite.Equal(OutputDirectoryMode.Adjacent, settings.OutputDirectoryMode);
     TestSuite.Equal(false, settings.OpenFolderOnCompletion);
+    TestSuite.Equal(true, settings.RunInBackgroundDuringJobs);
+});
+
+await tests.RunAsync("legacy settings enable background jobs when the property is missing", async () =>
+{
+    var directory = Path.Combine(Path.GetTempPath(), $"QuickConvertSettings-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(directory);
+    var path = Path.Combine(directory, "settings.json");
+    try
+    {
+        await File.WriteAllTextAsync(path, """
+            {"qualityPreset":"Balanced","outputDirectoryMode":"Adjacent","openFolderOnCompletion":false}
+            """);
+
+        var settings = await new JsonSettingsStore(path).LoadAsync();
+
+        TestSuite.Equal(true, settings.RunInBackgroundDuringJobs);
+    }
+    finally
+    {
+        Directory.Delete(directory, true);
+    }
 });
 
 await tests.RunAsync("settings save round-trips and leaves no partial file", async () =>
@@ -527,12 +549,14 @@ await tests.RunAsync("settings save round-trips and leaves no partial file", asy
         var expected = new QuickConvertSettings(
             ConversionPreset.Highest,
             OutputDirectoryMode.DownloadsQuickConvert,
-            true);
+            true,
+            false);
 
         await store.SaveAsync(expected);
         var actual = await store.LoadAsync();
 
         TestSuite.Equal(expected, actual);
+        TestSuite.Equal(false, actual.RunInBackgroundDuringJobs);
         TestSuite.Equal(true, File.Exists(path));
         TestSuite.Equal(false, File.Exists($"{path}.tmp"));
     }
@@ -581,7 +605,8 @@ await tests.RunAsync("sequential settings saves publish the newest complete valu
         var newest = new QuickConvertSettings(
             ConversionPreset.Economy,
             OutputDirectoryMode.DownloadsQuickConvert,
-            true);
+            true,
+            false);
         await store.SaveAsync(newest);
 
         TestSuite.Equal(newest, await store.LoadAsync());

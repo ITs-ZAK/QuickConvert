@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using QuickConvert.Core.Jobs;
 
 namespace QuickConvert.Core.Settings;
 
@@ -30,10 +31,16 @@ public sealed class JsonSettingsStore
         try
         {
             await using var stream = File.OpenRead(_path);
-            var settings = await JsonSerializer.DeserializeAsync<QuickConvertSettings>(
+            var settings = await JsonSerializer.DeserializeAsync<StoredSettings>(
                 stream,
                 Options).ConfigureAwait(false);
-            return IsValid(settings) ? settings! : QuickConvertSettings.Defaults;
+            return IsValid(settings)
+                ? new QuickConvertSettings(
+                    settings!.QualityPreset,
+                    settings.OutputDirectoryMode,
+                    settings.OpenFolderOnCompletion,
+                    settings.RunInBackgroundDuringJobs ?? true)
+                : QuickConvertSettings.Defaults;
         }
         catch (Exception exception) when (
             exception is IOException or UnauthorizedAccessException or JsonException)
@@ -64,10 +71,16 @@ public sealed class JsonSettingsStore
         }
     }
 
-    private static bool IsValid(QuickConvertSettings? settings) =>
+    private static bool IsValid(StoredSettings? settings) =>
         settings is not null &&
         Enum.IsDefined(settings.QualityPreset) &&
         Enum.IsDefined(settings.OutputDirectoryMode);
+
+    private sealed record StoredSettings(
+        ConversionPreset QualityPreset,
+        OutputDirectoryMode OutputDirectoryMode,
+        bool OpenFolderOnCompletion,
+        bool? RunInBackgroundDuringJobs);
 
     private static void TryDeleteTemporary(string path)
     {
