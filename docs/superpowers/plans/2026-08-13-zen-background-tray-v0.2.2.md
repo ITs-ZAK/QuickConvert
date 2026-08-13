@@ -250,7 +250,7 @@ Add one row to the existing expanded settings grid after “Otwórz folder po za
 
 Run: `dotnet run --configuration Release --project tests\QuickConvert.Tests\QuickConvert.Tests.csproj`
 
-Run: `dotnet build QuickConvert.sln --configuration Release`
+Run: `dotnet build QuickConvert.slnx --configuration Release`
 
 Expected: all tests pass and the solution builds with zero warnings/errors.
 
@@ -376,7 +376,7 @@ Create one idempotent cleanup method called on final close. It stops the grace t
 
 Run: `dotnet run --configuration Release --project tests\QuickConvert.Tests\QuickConvert.Tests.csproj`
 
-Run: `dotnet build QuickConvert.sln --configuration Release`
+Run: `dotnet build QuickConvert.slnx --configuration Release`
 
 Expected: all tests pass, source contracts confirm the branded icon and policy integration, and the solution builds with zero warnings/errors.
 
@@ -446,7 +446,7 @@ Run: `npm run test:extensions`
 
 Run: `npm run check:extensions`
 
-Run: `dotnet build QuickConvert.sln --configuration Release`
+Run: `dotnet build QuickConvert.slnx --configuration Release`
 
 Run: `dotnet run --no-build --configuration Release --project tests\QuickConvert.Tests\QuickConvert.Tests.csproj -- --integration`
 
@@ -482,7 +482,7 @@ git log --oneline origin/main..HEAD
 git tag --list v0.2.2
 npm run test:extensions
 npm run check:extensions
-dotnet build QuickConvert.sln --configuration Release
+dotnet build QuickConvert.slnx --configuration Release
 dotnet run --no-build --configuration Release --project tests\QuickConvert.Tests\QuickConvert.Tests.csproj -- --integration
 ```
 
